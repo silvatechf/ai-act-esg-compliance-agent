@@ -1,5 +1,5 @@
 
-# 🛡️ AI Act & ESG Compliance Agent (v1.0)
+# AI Act & ESG Compliance Agent (v1.0)
 
  Enterprise-Grade AI Governance for the European Market
 
