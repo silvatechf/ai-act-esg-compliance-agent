@@ -1,10 +1,10 @@
 # ai_agent/requirements.txt
 
-# Framework principal para expor a lógica Python como API REST
+# Framework logic Python with API REST
 fastapi
 
-# Servidor ASGI para rodar o FastAPI (precisa ser instalado separadamente do fastapi)
+# Server ASGI to run FastAPI 
 uvicorn
 
-# Biblioteca usada para validar a estrutura de dados (usada em data_models.py)
+#  (used for data_models.py)
 pydantic
