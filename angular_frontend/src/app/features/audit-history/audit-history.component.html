@@ -1,0 +1,165 @@
+<div class="p-6 md:p-10 bg-gray-50 min-h-screen font-sans">
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- HEADER & NAVIGATION -->
+        <header class="pb-4 border-b border-gray-200 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900">
+                    Audit History & Trail
+                </h1>
+                <p class="text-lg text-gray-600 mt-1">
+                    Records of all compliance assessments executed by the AI Agent (Persisted in H2 Database).
+                </p>
+            </div>
+            
+            <button (click)="loadHistory()" class="px-4 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 transition flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.746 2.75"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.746-2.75"></path><path d="M11 4h-2"></path><path d="M15 20h2"></path></svg>
+                Refresh History
+            </button>
+        </header>
+
+        <!-- LOADING / ERROR STATES -->
+        <div *ngIf="isLoading()" class="text-purple-600 font-semibold text-lg">Loading audit history...</div>
+        <div *ngIf="historyError()" class="text-red-600 font-bold text-lg p-4 bg-red-100 rounded-lg">Error: {{ historyError() }}</div>
+
+        <!-- ******************************************************************* -->
+        <!-- SEÇÃO DE DETALHE DO RELATÓRIO (MOSTRAR QUANDOselectedReport NÃO FOR NULO) -->
+        <!-- ******************************************************************* -->
+        <div *ngIf="selectedReport()">
+            <button (click)="clearDetail()" class="mb-4 text-purple-600 hover:underline font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="m15 18-6-6 6-6"/></svg>
+                Back to Audit List
+            </button>
+            
+            <!-- PAINEL DO CERTIFICADO (REUTILIZADO) -->
+            <div [ngClass]="{
+                'bg-yellow-50 border-yellow-500': selectedReport()!.riskCategory === 'Limited',
+                'bg-green-50 border-green-500': selectedReport()!.riskCategory === 'Minimal',
+                'bg-red-50 border-red-500': selectedReport()!.riskCategory === 'High' || selectedReport()!.riskCategory === 'Unacceptable'
+            }" class="p-8 rounded-xl shadow-2xl border-l-8 transition-all duration-300">
+                
+                <h2 class="text-2xl font-black text-gray-900 border-b pb-3 mb-4 flex items-center">
+                    <!-- Ícone de Certificado -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3" [ngClass]="{'text-red-600': selectedReport()!.riskCategory === 'High' || selectedReport()!.riskCategory === 'Unacceptable', 'text-yellow-600': selectedReport()!.riskCategory === 'Limited', 'text-emerald-600': selectedReport()!.riskCategory === 'Minimal'}"><path d="M12 15s1 2 2 2 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3v8c0 2 1 3 3 3h5"></path><path d="M12 15V4"></path><path d="M7 15h10"></path></svg>
+                    CERTIFICATE OF COMPLIANCE & RISK ASSESSMENT (ID: {{ selectedReport()!.id }})
+                </h2>
+        
+                <!-- RISK GAUGE -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border-b pb-4">
+                    <div class="col-span-1 border-r pr-6">
+                        <p class="text-sm font-semibold text-gray-500">Model Name</p>
+                        <p class="text-xl font-bold text-gray-800">{{ selectedReport()!.modelName }}</p>
+                    </div>
+                    <div class="col-span-1 border-r pr-6">
+                        <p class="text-sm font-semibold text-gray-500">Domain / Annex</p>
+                        <p class="text-xl font-bold text-gray-800">{{ selectedReport()!.domainApplication }}</p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-sm font-semibold text-gray-500">AI Act Risk Category</p>
+                        <p class="text-3xl font-extrabold" [ngClass]="{
+                            'text-red-700': selectedReport()!.riskCategory === 'High' || selectedReport()!.riskCategory === 'Unacceptable',
+                            'text-yellow-600': selectedReport()!.riskCategory === 'Limited',
+                            'text-emerald-600': selectedReport()!.riskCategory === 'Minimal'
+                        }">
+                            {{ selectedReport()!.riskCategory | uppercase }}
+                        </p>
+                    </div>
+                </div>
+        
+                <!-- GEMINI GENERATED RECOMMENDATIONS -->
+                <div class="p-6 bg-white rounded-xl shadow-inner border border-gray-200 mb-6">
+                    <h3 class="font-bold text-xl text-purple-700 mb-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-purple-500"><polyline points="14 2 14 8 20 8"></polyline><path d="M10 13a5 5 0 0 0-5 5v2"></path><path d="M5 18H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12l5 5v7a2 2 0 0 1-2 2h-2"></path></svg>
+                        Executive Summary & Immediate Actions (AI Act / ESG Consultant)
+                    </h3>
+                    <div class="text-gray-800 leading-relaxed space-y-3">
+                        <!-- Usando o Split para formatar o texto LLM em pontos de lista -->
+                        <ng-container *ngFor="let line of selectedReport()!.complianceRecommendations.split('\n'); let i = index">
+                            <p *ngIf="i === 0" class="font-semibold">{{ line }}</p>
+                            <ul *ngIf="i > 0 && line.trim().startsWith('1.')" class="list-disc list-inside space-y-1 ml-4">
+                                <li class="pl-2">{{ line.substring(3).trim() }}</li>
+                            </ul>
+                            <ul *ngIf="i > 0 && !line.trim().startsWith('1.')" class="list-disc list-inside space-y-1 ml-4">
+                                <li class="pl-2">{{ line.trim() }}</li>
+                            </ul>
+                        </ng-container>
+                    </div>
+                </div>
+                
+                <!-- COMPLIANCE & ESG DETAILS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-700 mb-2">EU AI Act Triggers</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+                            <li *ngFor="let article of selectedReport()!.aiActArticlesTriggered.split(';')">
+                                <span class="font-bold text-red-600">Required Compliance:</span> {{ article }}
+                            </li>
+                        </ul>
+                        <p class="text-xs text-gray-500 mt-2">
+                            **Justification:** {{ selectedReport()!.justification }}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-700 mb-2">ESG & Bias Risks (Social Pillar)</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+                            <li *ngFor="let risk of selectedReport()!.esgRisksActivated.split(';')">
+                                <span class="font-bold text-red-600">Activated Risk:</span> {{ risk }}
+                            </li>
+                        </ul>
+                        <p class="text-xs text-gray-500 mt-2">
+                            This directly informs the 'S' (Social) pillar of your ESG reporting mandate.
+                        </p>
+                    </div>
+                </div>
+        
+            </div>
+        </div>
+
+        <!-- ******************************************************************* -->
+        <!-- SEÇÃO DE LISTA DE HISTÓRICO (MOSTRAR QUANDO selectedReport for NULO) -->
+        <!-- ******************************************************************* -->
+        <div *ngIf="!selectedReport()">
+            <!-- Audit Table -->
+            <div *ngIf="auditReports().length > 0" class="bg-white p-4 rounded-xl shadow-lg overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr *ngFor="let report of auditReports()">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ report.id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ report.modelName }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ report.domainApplication }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold" 
+                                [ngClass]="{
+                                    'text-red-700': report.riskCategory === 'High',
+                                    'text-yellow-600': report.riskCategory === 'Limited',
+                                    'text-green-600': report.riskCategory === 'Minimal'
+                                }">
+                                {{ report.riskCategory | uppercase }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ report.auditTimestamp | date:'medium' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <!-- BOTÃO QUE CHAMA A FUNÇÃO DE DETALHE -->
+                                <button (click)="viewReportDetail(report.id)" class="text-purple-600 hover:text-purple-900 hover:underline">
+                                    View Detail
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div *ngIf="auditReports().length === 0 && !isLoading()" class="text-gray-500 p-4 bg-white rounded-xl shadow-lg">
+                No audit reports found. Submit a model to generate the first report.
+            </div>
+        </div>
+    </div>
+</div>

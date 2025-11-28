@@ -1,0 +1,58 @@
+-------ROOT---------
+
+.env
+.DS_Store
+
+--- JAVA (SPRING BOOT) ---
+
+/spring_api/target/
+/spring_api/bin/
+/spring_api/db/
+
+H2 Database (in-memory, mas pode deixar arquivos temporários)
+
+*.mv.db
+*.trace
+
+Logs and temp files
+
+*.log
+*.zip
+*.jar
+
+--- PYTHON (FASTAPI) ---
+
+/ai_agent/pycache/
+/ai_agent/venv/
+/ai_agent/.mypy_cache/
+/ai_agent/.pytest_cache/
+/ai_agent/.pyc
+/ai_agent/.sqlite
+
+--- ANGULAR / NODE ---
+
+/angular_frontend/dist/
+/angular_frontend/node_modules/
+/angular_frontend/tmp/
+/angular_frontend/coverage/
+/angular_frontend/out-tsc/
+
+Angular CLI cache
+
+/angular_frontend/.angular/cache/
+
+Lock files
+
+/angular_frontend/package-lock.json
+
+--- IDEs / TOOLS ---
+
+.idea/
+.vscode/*
+
+Re-enable if you want to share workspace settings
+
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json

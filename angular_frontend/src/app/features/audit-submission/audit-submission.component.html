@@ -1,0 +1,189 @@
+<!-- Este template utiliza o Tailwind CSS, os Reactive Forms do Angular e o AuditService. -->
+
+<div class="p-4 sm:p-8 bg-gray-50 min-h-screen font-sans">
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- HEADER DA PÁGINA: Mantido o layout profissional, mas sem o gradiente da Nav Bar -->
+    <header class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+      <h1 class="text-3xl font-extrabold text-gray-800">
+          Compliance Audit Request: Model Metadata
+      </h1>
+      <p class="text-gray-500 mt-1">
+        Input the model's function and critical flags to execute the full AI Act and ESG risk assessment.
+      </p>
+    </header>
+
+    <!-- RISK SUBMISSION FORM (Input Controlado) -->
+    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+      <form [formGroup]="auditForm" (ngSubmit)="onSubmit()" class="space-y-5">
+        
+        <!-- FIELDS: Name, Domain, Date -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label for="modelName" class="block text-sm font-medium text-gray-700">Model Name</label>
+            <input id="modelName" type="text" formControlName="modelName" placeholder="e.g., Hiring_Screener_v2.0"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border" required>
+          </div>
+          <div>
+            <label for="domainApplication" class="block text-sm font-medium text-gray-700">Domain Application (Annex III Scope)</label>
+            <select id="domainApplication" formControlName="domainApplication" 
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border">
+              <!-- LISTA EXPANDIDA DE DOMÍNIOS -->
+              <option value="HR Management">HR Management (Recruitment/Evaluation)</option>
+              <option value="Financial Services (Credit Assessment)">Financial Services (Credit Score/Eligibility)</option>
+              <option value="Biometrics/ID Management">Biometrics / ID Management</option>
+              <option value="Critical Infrastructure">Critical Infrastructure</option>
+              <option value="Education/Vocational Training">Education / Vocational Training</option>
+              <option value="Law Enforcement">Law Enforcement (Crime Prediction/Risk)</option>
+              <option value="Migration/Border Control">Migration / Border Control</option>
+              <option value="Chatbot/Virtual Assistant">Chatbot / Virtual Assistant (Limited Risk)</option>
+              <option value="Minimal/General Use">Minimal/General Use (Low Risk)</option>
+            </select>
+          </div>
+          <div>
+            <label for="dataTraining" class="block text-sm font-medium text-gray-700">Last Training Date (ISO 8601)</label>
+            <input id="dataTraining" type="text" formControlName="dataTraining"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-2 border" required>
+          </div>
+        </div>
+
+        <!-- AI ACT CRITICAL FLAGS (Checkboxes) -->
+        <fieldset class="border border-red-300 p-4 rounded-xl bg-red-50">
+          <legend class="text-sm font-bold text-red-700 mb-3">Critical Regulatory Triggers (EU AI Act)</legend>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div *ngFor="let trigger of highRiskTriggers" class="flex items-center">
+              <input [id]="trigger.key" [formControlName]="trigger.key" type="checkbox" 
+                     class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+              <label [for]="trigger.key" class="ml-2 text-sm text-gray-900 font-medium">{{ trigger.label }}</label>
+            </div>
+
+            <div class="flex items-center">
+              <input id="socialScoring" formControlName="governmentSocialScoring" type="checkbox" 
+                     class="h-4 w-4 text-gray-400 border-gray-300 rounded focus:ring-gray-500">
+              <label for="socialScoring" class="ml-2 text-sm text-gray-900 font-medium text-red-700">Prohibited: Government Social Scoring?</label>
+            </div>
+            
+          </div>
+        </fieldset>
+
+        <!-- SUBMISSION & STATUS -->
+        <div class="flex flex-col sm:flex-row justify-between items-center pt-4">
+          <button type="submit" [disabled]="auditForm.invalid || isSubmitting()" 
+                  class="w-full sm:w-auto px-8 py-3 border border-transparent text-base font-bold rounded-xl shadow-lg 
+                         text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 
+                         transition duration-150 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed">
+            <span *ngIf="!isSubmitting()">
+              Execute Full Compliance Audit
+            </span>
+            <span *ngIf="isSubmitting()" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Processing Audit...
+            </span>
+          </button>
+          
+          <p *ngIf="submissionError()" class="mt-3 sm:mt-0 text-sm font-bold text-red-600">
+            Error: {{ submissionError() }}
+          </p>
+        </div>
+      </form>
+    </div>
+    
+    <!-- AUDIT REPORT / CERTIFICATE PANEL -->
+    <div *ngIf="lastReport()" [ngClass]="{
+        'bg-yellow-50 border-yellow-500': lastReport()!.riskCategory === 'Limited',
+        'bg-green-50 border-green-500': lastReport()!.riskCategory === 'Minimal',
+        'bg-red-50 border-red-500': lastReport()!.riskCategory === 'High' || lastReport()!.riskCategory === 'Unacceptable'
+    }" class="p-8 rounded-xl shadow-2xl border-l-8 transition-all duration-300">
+        
+        <h2 class="text-2xl font-black text-gray-900 border-b pb-3 mb-4 flex items-center">
+            <!-- Ícone de Certificado (Escudo com Visto) - Nova cor de acento -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3" [ngClass]="{'text-red-600': lastReport()!.riskCategory === 'High' || lastReport()!.riskCategory === 'Unacceptable', 'text-yellow-600': lastReport()!.riskCategory === 'Limited', 'text-emerald-600': lastReport()!.riskCategory === 'Minimal'}"><path d="M12 15s1 2 2 2 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3v8c0 2 1 3 3 3h5"></path><path d="M12 15V4"></path><path d="M7 15h10"></path></svg>
+            CERTIFICATE OF COMPLIANCE & RISK ASSESSMENT
+        </h2>
+
+        <!-- RISK GAUGE -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border-b pb-4">
+            <div class="col-span-1 border-r pr-6">
+                <p class="text-sm font-semibold text-gray-500">Model Name</p>
+                <p class="text-xl font-bold text-gray-800">{{ lastReport()!.modelName }}</p>
+            </div>
+            <div class="col-span-1 border-r pr-6">
+                <p class="text-sm font-semibold text-gray-500">Domain / Annex</p>
+                <p class="text-xl font-bold text-gray-800">{{ lastReport()!.domainApplication }}</p>
+            </div>
+            <div class="col-span-1">
+                <p class="text-sm font-semibold text-gray-500">AI Act Risk Category</p>
+                <p class="text-3xl font-extrabold" [ngClass]="{
+                    'text-red-700': lastReport()!.riskCategory === 'High' || lastReport()!.riskCategory === 'Unacceptable',
+                    'text-yellow-600': lastReport()!.riskCategory === 'Limited',
+                    'text-emerald-600': lastReport()!.riskCategory === 'Minimal'
+                }">
+                    {{ lastReport()!.riskCategory | uppercase }}
+                </p>
+            </div>
+        </div>
+
+        <!-- GEMINI GENERATED RECOMMENDATIONS (Core Value) -->
+        <div class="p-6 bg-white rounded-xl shadow-inner border border-gray-200 mb-6">
+            <h3 class="font-bold text-xl text-purple-700 mb-3 flex items-center">
+                <!-- Ícone de Consultoria (Documento com Caneta) - Nova cor de acento -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-purple-500"><polyline points="14 2 14 8 20 8"></polyline><path d="M10 13a5 5 0 0 0-5 5v2"></path><path d="M5 18H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12l5 5v7a2 2 0 0 1-2 2h-2"></path></svg>
+                Executive Summary & Immediate Actions (AI Act / ESG Consultant)
+            </h3>
+            
+            <!-- CORREÇÃO: FORMATANDO O TEXTO DO SUMÁRIO EXECUTIVO PARA LEITURA FÁCIL -->
+            <div class="text-gray-800 leading-relaxed space-y-3">
+                <!-- Divide o texto onde há nova linha ('\n') e renderiza cada item como parágrafo ou item de lista. -->
+                <ng-container *ngFor="let line of lastReport()!.complianceRecommendations.split('\n'); let i = index">
+                    
+                    <p *ngIf="i === 0" class="font-semibold">{{ line }}</p>
+                    
+                    <ul *ngIf="i > 0 && line.trim().startsWith('1.')" class="list-disc list-inside space-y-1 ml-4">
+                        <li class="pl-2">{{ line.substring(3).trim() }}</li>
+                    </ul>
+                    
+                    <ul *ngIf="i > 0 && !line.trim().startsWith('1.')" class="list-disc list-inside space-y-1 ml-4">
+                        <li class="pl-2">{{ line.trim() }}</li>
+                    </ul>
+                </ng-container>
+            </div>
+        </div>
+        
+        <!-- COMPLIANCE & ESG DETAILS (Audit Trail) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200">
+            <div>
+                <h3 class="font-bold text-lg text-gray-700 mb-2">EU AI Act Triggers</h3>
+                <!-- Usando *ngFor para exibir cada artigo acionado em uma lista -->
+                <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+                    <li *ngFor="let article of lastReport()!.aiActArticlesTriggered.split(';')">
+                        <span class="font-bold text-red-600">Required Compliance:</span> {{ article }}
+                    </li>
+                </ul>
+                <p class="text-xs text-gray-500 mt-2">
+                    **Justification:** {{ lastReport()!.justification }}
+                </p>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg text-gray-700 mb-2">ESG & Bias Risks (Social Pillar)</h3>
+                <!-- Usando *ngFor para exibir cada risco ESG em uma lista -->
+                <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+                    <li *ngFor="let risk of lastReport()!.esgRisksActivated.split(';')">
+                        <span class="font-bold text-red-600">Activated Risk:</span> {{ risk }}
+                    </li>
+                </ul>
+                <p class="text-xs text-gray-500 mt-2">
+                    This directly informs the 'S' (Social) pillar of your ESG reporting mandate.
+                </p>
+            </div>
+        </div>
+
+        <!-- FOOTER INFO -->
+        <div class="mt-6 text-xs text-gray-500 border-t pt-4 text-center">
+            <p>Generated by AI Agent V1.0 | Audit Timestamp: {{ lastReport()!.auditTimestamp | date:'medium' }}</p>
+        </div>
+
+    </div>
+
+  </div>
+</div>
