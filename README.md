@@ -66,7 +66,7 @@ Fernando Silva Software Engineer | Java & Angular Specialist | AI Enthusiast
 
 LinkedIn https://www.linkedin.com/in/fernando-silva-83b155a4/
 
-© 2025 CodeGuard AI. All rights reserved.
+© 2025 AI Act & ESG Compliance Agent. All rights reserved.
 
 
 
